@@ -33,4 +33,31 @@ router.post('/register', validAuthInput, async (req, res) => {
   }
 })
 
+router.post('/login', validAuthInput, async (req, res) => {
+  try {
+    // destructure the request
+    const { email, password } = req.body
+
+    // ensure user exists
+    const user = await User.query().where({email}).first()
+
+    if (!user) {
+      return res.status(401).json({ message: 'password or email incorrect' })
+    }
+
+    // check for valid password
+    const passwordIsValid = await bcrypt.compare(password, user.password)
+    if (!passwordIsValid) {
+      return res.status(401).json({ message: 'password or email incorrect' })
+    }
+
+    // return jwt
+    const token = await jwtGenerator(user.id)
+    return res.status(200).json({ token })
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ message: 'login server error' })
+  }
+})
+
 module.exports = router
